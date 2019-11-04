@@ -5,6 +5,7 @@ from resources.lib import kodilogging
 import logging
 import xbmcaddon
 import xbmcgui
+import xbmcvfs
 
 
 ADDON = xbmcaddon.Addon()
