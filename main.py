@@ -12,6 +12,3 @@ ADDON = xbmcaddon.Addon()
 kodilogging.config()
 
 script.show_dialog()
-
-
-bubu

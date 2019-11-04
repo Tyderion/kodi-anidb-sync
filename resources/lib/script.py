@@ -5,7 +5,6 @@ from resources.lib import kodilogging
 import logging
 import xbmcaddon
 import xbmcgui
-import xbmcvfs
 
 
 ADDON = xbmcaddon.Addon()
@@ -18,5 +17,7 @@ def show_dialog():
     addon_name = ADDON.getAddonInfo('name')
 
     line1 = "Hello World!"
+
+
 
     xbmcgui.Dialog().ok(addon_name, line1)
