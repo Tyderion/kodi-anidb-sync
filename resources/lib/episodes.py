@@ -3,8 +3,7 @@ import re
 import logging
 from resources.lib.auto import AutoRepr
 from resources.lib.anidb import AnidbHelper, FileEntry
-
-from time import sleep
+import os
 
 logger = logging.getLogger('episode_sync')
 logger.setLevel(logging.DEBUG)
@@ -14,6 +13,7 @@ logger.addHandler(fh)
 
 # TODO: Solve multiple entries problem
 DONE = 14
+
 
 class KodiTVShow(AutoRepr):
     def __init__(self, data):
@@ -39,12 +39,14 @@ class KodiHelper:
 
     def get_tvshows(self):
         return [KodiTVShow(show) for show in
-                self.kodi.VideoLibrary.GetTVShows(properties=['title', 'season', 'episode', 'originaltitle'])['result']['tvshows'] if
+                self.kodi.VideoLibrary.GetTVShows(properties=['title', 'season', 'episode', 'originaltitle'])['result'][
+                    'tvshows'] if
                 show['tvshowid'] > DONE]
 
     def get_episodes(self, tvshow: int, season: int, start=0, end=-1):
         result = self.kodi.VideoLibrary.GetEpisodes(tvshowid=tvshow, season=season, limits={'start': start, 'end': end},
-                                                   properties=['file', 'episode', 'showtitle', 'title', 'playcount'])['result']
+                                                    properties=['file', 'episode', 'showtitle', 'title', 'playcount'])[
+            'result']
         if 'episodes' in result:
             return [KodiEpisode(e) for e in result['episodes']]
         return []
@@ -56,21 +58,28 @@ class KodiHelper:
         self.kodi.VideoLibrary.SetEpisodeDetails(episodeid=episode.id, playcount=1)
 
 
-kodi = KodiHelper('192.168.1.44')
-anidb = AnidbHelper()
+def sync_anime():
+    kodi = KodiHelper(os.environ['KODIIP'])
+    anidb = AnidbHelper()
 
-shows = kodi.get_tvshows()
-for show in shows:
-    for season in range(1, show.seasons + 1):
-        unwatched = kodi.get_unwatched_episodes(show.id, season, end=show.episode_count)
-        for ep in unwatched:
-            print('Processing Episode', ep.episode, '[', ep.id, '] of ', show.title, '[', show.id, ']')
-            group = re.search('\[(.+?)\]', ep.file).group(1)
-            anidbFile = anidb.load_episode_details(show.title, group, ep.episode)
-            if anidbFile is None:
-                logger.info('AniDbError: show: ' + show.title + '[' + str(show.id) + ']:' + str(ep.episode) + '[' + str(ep.id) + ']')
-                print("Could not find episode ", ep.episode, 'of', ep.show)
-            if anidbFile.watched and not ep.watched:
-                kodi.mark_as_watched(ep)
-            # if not anidbFile.watched and ep.watched:
-            #     anidb.mark_watched(anidbFile)
+    shows = kodi.get_tvshows()
+    for show in shows:
+        for season in range(1, show.seasons + 1):
+            unwatched = kodi.get_unwatched_episodes(show.id, season, end=show.episode_count)
+            for ep in unwatched:
+                print('Processing Episode', ep.episode, '[', ep.id, '] of ', show.title, '[', show.id, ']')
+                group = re.search('\[(.+?)\]', ep.file).group(1)
+                anidbFile = anidb.load_episode_details(show.title, group, ep.episode)
+                if anidbFile is None:
+                    logger.info(
+                        'AniDbError: show: ' + show.title + '[' + str(show.id) + ']:' + str(ep.episode) + '[' + str(
+                            ep.id) + ']')
+                    print("Could not find episode ", ep.episode, 'of', ep.show)
+                if anidbFile.watched and not ep.watched:
+                    kodi.mark_as_watched(ep)
+                # if not anidbFile.watched and ep.watched:
+                #     anidb.mark_watched(anidbFile)
+
+
+if __name__ == '__main__':
+    sync_anime()
