@@ -39,14 +39,14 @@ class AnidbHelper:
         if self.config.username is None or self.config.password is None:
             raise AssertionError("Username and Password must be set")
         self.ensure_connection()
-        if not self.client.ping():
-            raise ConnectionError
 
     def ensure_connection(self):
         try:
             self.client.auth(self.config.username, self.config.password)
             if self.config.api_key is not None:
                 self.client.encrypt(self.config.api_key, self.config.username)
+            if not self.client.ping():
+                raise ConnectionError
         except yumemi.exceptions.ClientError as err:
             if err.response.code == ANIDB_BANNED:
                 # Wait for half an hour
