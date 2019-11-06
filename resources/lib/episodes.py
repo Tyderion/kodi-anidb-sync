@@ -13,7 +13,7 @@ fh.setLevel(logging.DEBUG)
 logger.addHandler(fh)
 
 # TODO: Solve multiple entries problem
-DONE = 11
+DONE = 14
 
 class KodiTVShow(AutoRepr):
     def __init__(self, data):
