@@ -1,28 +1,22 @@
 import yumemi
 import os
-import logging
 from time import sleep
-from resources.lib.groupmapping import GROUPS
+from .groupmapping import GROUPS
+from anidbsync.logger import get_logger
+from anidbsync.auto import AutoRepr
 
-logger = logging.getLogger('anidb_connect')
-logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler('anidb.log')
-fh.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-fh.setFormatter(formatter)
-# add the handlers to the logger
-logger.addHandler(fh)
+logger = get_logger('anidb')
 
 ANIDB_BANNED = 555
 
 
-class MyListEntry:
+class MyListEntry(AutoRepr):
     def __init__(self, data):
         self.lid = data[0]
         self.fid = data[1]
 
 
-class FileEntry:
+class FileEntry(AutoRepr):
     UNWATCHED = None
 
     def __init__(self, data):

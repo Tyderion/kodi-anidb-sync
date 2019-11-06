@@ -1,15 +1,5 @@
 from kodipydent import Kodi
-import re
-import logging
-from resources.lib.auto import AutoRepr
-from resources.lib.anidb import AnidbHelper, FileEntry
-import os
-
-logger = logging.getLogger('episode_sync')
-logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler('episodes.log')
-fh.setLevel(logging.DEBUG)
-logger.addHandler(fh)
+from anidbsync.auto import AutoRepr
 
 # TODO: Solve multiple entries problem
 DONE = 14
@@ -34,8 +24,8 @@ class KodiEpisode(AutoRepr):
 
 
 class KodiHelper:
-    def __init__(self, url='localhost'):
-        self.kodi = Kodi(url)
+    def __init__(self, url='localhost', password=None, port=None):
+        self.kodi = Kodi(url, password)
 
     def get_tvshows(self):
         return [KodiTVShow(show) for show in
@@ -58,28 +48,3 @@ class KodiHelper:
         self.kodi.VideoLibrary.SetEpisodeDetails(episodeid=episode.id, playcount=1)
 
 
-def sync_anime():
-    kodi = KodiHelper(os.environ['KODIIP'])
-    anidb = AnidbHelper()
-
-    shows = kodi.get_tvshows()
-    for show in shows:
-        for season in range(1, show.seasons + 1):
-            unwatched = kodi.get_unwatched_episodes(show.id, season, end=show.episode_count)
-            for ep in unwatched:
-                print('Processing Episode', ep.episode, '[', ep.id, '] of ', show.title, '[', show.id, ']')
-                group = re.search('\[(.+?)\]', ep.file).group(1)
-                anidbFile = anidb.load_episode_details(show.title, group, ep.episode)
-                if anidbFile is None:
-                    logger.info(
-                        'AniDbError: show: ' + show.title + '[' + str(show.id) + ']:' + str(ep.episode) + '[' + str(
-                            ep.id) + ']')
-                    print("Could not find episode ", ep.episode, 'of', ep.show)
-                if anidbFile.watched and not ep.watched:
-                    kodi.mark_as_watched(ep)
-                # if not anidbFile.watched and ep.watched:
-                #     anidb.mark_watched(anidbFile)
-
-
-if __name__ == '__main__':
-    sync_anime()
