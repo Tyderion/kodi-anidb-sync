@@ -25,3 +25,4 @@ def get_kodi_config():
     return KodiConfig(url=os.environ.get('KODI.URL'),
                       password=os.environ.get('KODI.PASSWORD'),
                       port=os.environ.get('KODI.PORT'))
+

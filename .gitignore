@@ -1,3 +1,5 @@
+start.conf
+
 *.pyc
 *.pyo
 .DS*

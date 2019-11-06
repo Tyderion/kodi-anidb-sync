@@ -7,10 +7,26 @@ from anidbsync.logger import get_logger
 
 logger = get_logger('anidbsync')
 
+state_name = 'start.conf'
 
-def sync_anime(kodi_config: KodiConfig, anidb_config: AniDBConfig):
-    kodi = KodiHelper(kodi_config)
-    anidb = AnidbHelper(anidb_config)
+
+def get_starting_series():
+    try:
+        with open(state_name) as f:
+            content = f.read()
+            return int(content)
+    except (FileNotFoundError, ValueError):
+        return 0
+
+
+def set_starting_series(start_at: int):
+    with open(state_name, 'w') as f:
+        f.write(str(start_at))
+
+
+def sync_anime(kodi_config: KodiConfig, anidb_config: AniDBConfig, start_at=0):
+    kodi = KodiHelper(config=kodi_config, start_at=start_at)
+    anidb = AnidbHelper(config=anidb_config)
 
     shows = kodi.get_tvshows()
     for show in shows:
@@ -24,12 +40,13 @@ def sync_anime(kodi_config: KodiConfig, anidb_config: AniDBConfig):
                     logger.info(
                         'AniDbError: show: ' + show.title + '[' + str(show.id) + ']:' + str(ep.episode) + '[' + str(
                             ep.id) + ']')
-                    print("Could not find episode ", ep.episode, 'of', ep.show)
                 if anidb_file.watched and not ep.watched:
                     kodi.mark_as_watched(ep)
                 # if not anidb_file.watched and ep.watched:
                 #     anidb.mark_watched(anidb_file)
+        set_starting_series(show.id)
 
 
 if __name__ == '__main__':
-    sync_anime(get_kodi_config(), get_anidb_config())
+    start = get_starting_series()
+    sync_anime(get_kodi_config(), get_anidb_config(), start_at=start)

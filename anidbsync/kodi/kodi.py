@@ -4,9 +4,6 @@ from anidbsync.auto import AutoRepr
 # TODO: Solve multiple entries problem
 from anidbsync.config import KodiConfig
 
-DONE = 14
-
-
 class KodiTVShow(AutoRepr):
     def __init__(self, data):
         self.id = data['tvshowid']
@@ -26,7 +23,8 @@ class KodiEpisode(AutoRepr):
 
 
 class KodiHelper:
-    def __init__(self, url='localhost', password=None, port=None, config: KodiConfig = None):
+    def __init__(self, url='localhost', password=None, port=None, config: KodiConfig = None, start_at=0):
+        self.start_at = start_at
         if config is not None:
             self.kodi = Kodi(config.url, config.password, config.port)
         else:
@@ -36,7 +34,7 @@ class KodiHelper:
         return [KodiTVShow(show) for show in
                 self.kodi.VideoLibrary.GetTVShows(properties=['title', 'season', 'episode', 'originaltitle'])['result'][
                     'tvshows'] if
-                show['tvshowid'] > DONE]
+                show['tvshowid'] > self.start_at]
 
     def get_episodes(self, tvshow: int, season: int, start=0, end=-1):
         result = self.kodi.VideoLibrary.GetEpisodes(tvshowid=tvshow, season=season, limits={'start': start, 'end': end},
