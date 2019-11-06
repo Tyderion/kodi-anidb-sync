@@ -1,7 +1,7 @@
 # Anidb-Kodi-Sync
 Synchronizes the watched status of your anime list on [aniDB](https://anidb.net).
 
-If your anime files are named in a way that the group is in the first `[]`, e.g. `One Piece - 01 [FansubGroup]` it should work.
+If your anime files are named in a way that the group is in the first `[]`, e.g. `One Piece - 01 [FansubGroup].mkv` it should work.
 
 I suggest using Scudlees [AniDB scraper](https://forum.kodi.tv/showthread.php?tid=142835) for Kodi. If you use his AniDB Renaming Tags list it should work.
 
@@ -21,7 +21,7 @@ Setup your environment variables as follows (or change values in config.py)
 - `KODI.PORT` - Optional: Your Kodi remote access port (omitting works for default Kodi config)
 
 ## Synchronize
-Run main.py to synchronize all watched files from aniDB to your Kodi instance.
+Run `python anidbsync/main.py` to synchronize all watched files from aniDB to your Kodi instance.
 Also supports reverse synchro (from Kodi to aniDB)
 
 # TODO
