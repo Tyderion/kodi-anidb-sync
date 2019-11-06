@@ -2,6 +2,7 @@ import yumemi
 import os
 import logging
 from time import sleep
+from resources.lib.groupmapping import GROUPS
 
 logger = logging.getLogger('anidb_connect')
 logger.setLevel(logging.DEBUG)
@@ -22,9 +23,14 @@ class MyListEntry:
 
 
 class FileEntry:
+    UNWATCHED = None
+
     def __init__(self, data):
         self.fid = data[0]
         self.watched = data[1] == '1'
+
+
+FileEntry.UNWATCHED = FileEntry(['', '0'])
 
 
 class AnidbHelper:
@@ -40,7 +46,7 @@ class AnidbHelper:
         except yumemi.exceptions.ClientError as err:
             if err.response.code == ANIDB_BANNED:
                 # Wait for half an hour
-                logger.info("BANNED waiting 30min")
+                logger.info("BANNED while logging in waiting 30min")
                 sleep(1800)
                 self.ensure_connection()
             else:
@@ -51,9 +57,16 @@ class AnidbHelper:
 
     def load_episode_details(self, anime, group, epNo):
         if len(anime) == 0:
-            return FileEntry(['', '0'])
-        if group == 'SHS':
-            group = 'Shinsen-Subs'
+            return FileEntry.UNWATCHED
+        if group in GROUPS:
+            groups = GROUPS[group]
+            for i in range(len(groups)):
+                res = self._load_episode_details(anime, groups[i], epNo)
+                if res is not None or i == len(groups):
+                    return res
+
+    def _load_episode_details(self, anime, group, epNo):
+        sleep(5)
         res = self.call('MYLIST ', {'aname': anime, 'gname': group, 'epno': epNo})
         if res.code == 312:
             logger.info("MULTI: " + anime + "[" + group + "]: " + str(epNo))
@@ -63,26 +76,21 @@ class AnidbHelper:
             ml_entry = MyListEntry(res.data[0])
             res = self.call('FILE', {'fid': ml_entry.fid, 'fmask': '0000000020', 'amask': '00000000'})
             if res.code == 220:
-                f_entry = FileEntry(res.data[0])
-                return f_entry
-        elif group == 'K-F':
-            sleep(5)
-            return self.load_episode_details(anime, 'Kaizoku-Fansubs', epNo)
-        elif group == 'Kaizoku-Fansubs':
-            sleep(5)
-            return self.load_episode_details(anime, 'Kikkai-Fansub', epNo)
+                return FileEntry(res.data[0])
 
-    def mark_watched(self, file):
+    def mark_watched(self, file: FileEntry):
+        sleep(5)
         if len(file.fid) > 0:
             res = self.call('MYLISTADD ', {'fid': file.fid, 'edit': '1', 'viewed': '1'})
-            print(res.message)
+            if res.code != 311:
+                logger.info("Could not mark file as watched" + res.message)
 
     def call(self, name, args):
         try:
             return self.client.call(name, args)
         except yumemi.exceptions.ClientError as err:
             if err.response.code == ANIDB_BANNED:
-                logger.info("BANNED waiting 30min")
+                logger.info("BANNED while getting data waiting 30min")
                 sleep(1800)
                 self.ensure_connection()
                 return self.client.call(name, args)
