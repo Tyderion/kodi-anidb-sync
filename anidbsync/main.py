@@ -1,7 +1,6 @@
 from anidbsync.anidb.anidb import AnidbHelper
 from anidbsync.config import KodiConfig, AniDBConfig, get_anidb_config, get_kodi_config
 from anidbsync.kodi.kodi import KodiHelper
-import os
 import re
 
 from anidbsync.logger import get_logger
