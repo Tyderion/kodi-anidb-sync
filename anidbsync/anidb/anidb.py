@@ -1,6 +1,8 @@
 import yumemi
 import os
 from time import sleep
+
+from anidbsync.config import AniDBConfig
 from .groupmapping import GROUPS
 from anidbsync.logger import get_logger
 from anidbsync.auto import AutoRepr
@@ -28,15 +30,23 @@ FileEntry.UNWATCHED = FileEntry(['', '0'])
 
 
 class AnidbHelper:
-    def __init__(self):
+    def __init__(self, username=None, password=None, api_key=None, config: AniDBConfig = None):
         self.client = yumemi.Client()
+        if config is not None:
+            self.config = config
+        else:
+            self.config = AniDBConfig(username=username, password=password, api_key=api_key)
+        if self.config.username is None or self.config.password is None:
+            raise AssertionError("Username and Password must be set")
         self.ensure_connection()
         if not self.client.ping():
             raise ConnectionError
 
     def ensure_connection(self):
         try:
-            self.client.auth(os.environ['USERNAME'], os.environ['PASSWORD'])
+            self.client.auth(self.config.username, self.config.password)
+            if self.config.api_key is not None:
+                self.client.encrypt(self.config.api_key, self.config.username)
         except yumemi.exceptions.ClientError as err:
             if err.response.code == ANIDB_BANNED:
                 # Wait for half an hour

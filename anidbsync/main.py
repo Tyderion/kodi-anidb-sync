@@ -1,4 +1,5 @@
 from anidbsync.anidb.anidb import AnidbHelper
+from anidbsync.config import KodiConfig, AniDBConfig, get_anidb_config, get_kodi_config
 from anidbsync.kodi.kodi import KodiHelper
 import os
 import re
@@ -7,9 +8,10 @@ from anidbsync.logger import get_logger
 
 logger = get_logger('anidbsync')
 
-def sync_anime(kodi_url='localhost', password=None, port=None):
-    kodi = KodiHelper(kodi_url, password, port)
-    anidb = AnidbHelper()
+
+def sync_anime(kodi_config: KodiConfig, anidb_config: AniDBConfig):
+    kodi = KodiHelper(kodi_config)
+    anidb = AnidbHelper(anidb_config)
 
     shows = kodi.get_tvshows()
     for show in shows:
@@ -31,4 +33,4 @@ def sync_anime(kodi_url='localhost', password=None, port=None):
 
 
 if __name__ == '__main__':
-    sync_anime(os.environ['KODIIP'])
+    sync_anime(get_kodi_config(), get_anidb_config())

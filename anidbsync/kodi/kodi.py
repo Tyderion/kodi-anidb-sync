@@ -2,6 +2,8 @@ from kodipydent import Kodi
 from anidbsync.auto import AutoRepr
 
 # TODO: Solve multiple entries problem
+from anidbsync.config import KodiConfig
+
 DONE = 14
 
 
@@ -24,8 +26,11 @@ class KodiEpisode(AutoRepr):
 
 
 class KodiHelper:
-    def __init__(self, url='localhost', password=None, port=None):
-        self.kodi = Kodi(url, password)
+    def __init__(self, url='localhost', password=None, port=None, config: KodiConfig = None):
+        if config is not None:
+            self.kodi = Kodi(config.url, config.password, config.port)
+        else:
+            self.kodi = Kodi(url, password, port)
 
     def get_tvshows(self):
         return [KodiTVShow(show) for show in
@@ -46,5 +51,3 @@ class KodiHelper:
 
     def mark_as_watched(self, episode: KodiEpisode):
         self.kodi.VideoLibrary.SetEpisodeDetails(episodeid=episode.id, playcount=1)
-
-
