@@ -1,4 +1,4 @@
-from anidbsync.anidb.anidb import AnidbHelper
+from anidbsync.anidb.anidb import AnidbHelper, FileEntry
 from anidbsync.config import KodiConfig, AniDBConfig, get_anidb_config, get_kodi_config
 from anidbsync.kodi.kodi import KodiHelper
 import re
@@ -32,6 +32,7 @@ def sync_anime(kodi_config: KodiConfig, anidb_config: AniDBConfig, start_at=0):
     for show in shows:
         for season in range(1, show.seasons + 1):
             unwatched = kodi.get_unwatched_episodes(show.id, season, end=show.episode_count)
+            first_n_unwatched = unwatched[0].episode == 1
             for ep in unwatched:
                 print('Processing Episode', ep.episode, '[', ep.id, '] of ', show.title, '[', show.id, ']')
                 group = re.search("\\[(.+?)\\]", ep.file).group(1)
@@ -40,8 +41,12 @@ def sync_anime(kodi_config: KodiConfig, anidb_config: AniDBConfig, start_at=0):
                     logger.info(
                         'AniDbError: show: ' + show.title + '[' + str(show.id) + ']:' + str(ep.episode) + '[' + str(
                             ep.id) + ']')
+                    anidb_file = FileEntry.UNWATCHED
+                first_n_unwatched = not anidb_file.watched
                 if anidb_file.watched and not ep.watched:
                     kodi.mark_as_watched(ep)
+                elif first_n_unwatched and not anidb_file.watched and ep.episode >= 2:
+                    break
                 # if not anidb_file.watched and ep.watched:
                 #     anidb.mark_watched(anidb_file)
         set_starting_series(show.id)
