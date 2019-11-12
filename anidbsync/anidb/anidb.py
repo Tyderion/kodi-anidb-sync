@@ -2,6 +2,7 @@ import yumemi
 import os
 from time import sleep
 
+from anidbsync.anidb.animemapping import ANIME
 from anidbsync.config import AniDBConfig
 from .groupmapping import GROUPS
 from anidbsync.logger import get_logger
@@ -10,6 +11,9 @@ from anidbsync.auto import AutoRepr
 logger = get_logger('anidb')
 
 ANIDB_BANNED = 555
+
+SLEEP_TIME = 7
+SLEEP_TIME_BANNED = 1800
 
 
 class MyListEntry(AutoRepr):
@@ -23,7 +27,10 @@ class FileEntry(AutoRepr):
 
     def __init__(self, data):
         self.fid = data[0]
-        self.watched = data[1] == '1'
+        try:
+            self.watched = int(data[1]) > 0
+        except ValueError:
+            self.watched = False
 
 
 FileEntry.UNWATCHED = FileEntry(['', '0'])
@@ -51,13 +58,16 @@ class AnidbHelper:
             if err.response.code == ANIDB_BANNED:
                 # Wait for half an hour
                 logger.info("BANNED while logging in waiting 30min")
-                sleep(1800)
+                sleep(SLEEP_TIME_BANNED)
                 self.ensure_connection()
             else:
                 raise
 
-    def __del__(self):
+    def logout(self):
         self.client.logout()
+
+    def __del__(self):
+        self.logout()
 
     def load_episode_details(self, anime, group, epNo):
         if len(anime) == 0:
@@ -68,22 +78,25 @@ class AnidbHelper:
                 res = self._load_episode_details(anime, groups[i], epNo)
                 if res is not None or i == len(groups):
                     return res
+        return self._load_episode_details(anime, group, epNo)
 
     def _load_episode_details(self, anime, group, epNo):
-        sleep(5)
+        sleep(SLEEP_TIME)
+        if anime in ANIME:
+            anime = ANIME[anime]
         res = self.call('MYLIST ', {'aname': anime, 'gname': group, 'epno': epNo})
         if res.code == 312:
             logger.info("MULTI: " + anime + "[" + group + "]: " + str(epNo))
             return FileEntry(['', res.data[0][6]])
         if res.code == 221:
-            sleep(5)
+            sleep(SLEEP_TIME)
             ml_entry = MyListEntry(res.data[0])
             res = self.call('FILE', {'fid': ml_entry.fid, 'fmask': '0000000020', 'amask': '00000000'})
             if res.code == 220:
                 return FileEntry(res.data[0])
 
     def mark_watched(self, file: FileEntry):
-        sleep(5)
+        sleep(SLEEP_TIME)
         if len(file.fid) > 0:
             res = self.call('MYLISTADD ', {'fid': file.fid, 'edit': '1', 'viewed': '1'})
             if res.code != 311:
@@ -95,7 +108,7 @@ class AnidbHelper:
         except yumemi.exceptions.ClientError as err:
             if err.response.code == ANIDB_BANNED:
                 logger.info("BANNED while getting data waiting 30min")
-                sleep(1800)
+                sleep(SLEEP_TIME_BANNED)
                 self.ensure_connection()
                 return self.client.call(name, args)
             else:
