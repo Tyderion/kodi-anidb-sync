@@ -1,6 +1,6 @@
 from kodipydent import Kodi
 from anidbsync.auto import AutoRepr
-
+import operator
 # TODO: Solve multiple entries problem
 from anidbsync.config import KodiConfig
 
@@ -42,9 +42,14 @@ class KodiHelper:
                     'tvshows'] if
                 show['tvshowid'] > self.start_at]
 
-    def get_seasons(self, tvshowid):
-        return [KodiSeason(season) for season in
+    def get_seasons(self, tvshowid: int):
+        seasons =  [KodiSeason(season) for season in
                 self.kodi.VideoLibrary.GetSeasons(tvshowid=tvshowid, properties=['season', 'episode'])['result']['seasons']]
+        # Anime generally only have 1 season (s2 is normally a different show).
+        # season 0 is always the specials, which contain endings and openings
+        # which should be marked watched if any ep is watched
+        seasons.sort(key=operator.attrgetter('num'), reverse=True)
+        return seasons
 
     def get_episodes(self, tvshow: int, season: int, start=0, end=-1):
         result = self.kodi.VideoLibrary.GetEpisodes(tvshowid=tvshow, season=season, limits={'start': start, 'end': end},

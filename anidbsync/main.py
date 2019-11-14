@@ -44,25 +44,21 @@ def sync_anime(kodi_config: KodiConfig, anidb_config: AniDBConfig, start_at=0):
     for show in shows:
         print('Processing show ' + show.title)
         seasons = kodi.get_seasons(show.id)
-        seasons.sort(key=operator.attrgetter('num'), reverse=True)
-        some_watched = False
-        for season in seasons: # Start with s1 instead of s0 (= specials / openings / endings etc)
+        should_mark_op_ed_watched = False
+        for season in seasons:
             unwatched = kodi.get_unwatched_episodes(show.id, season.num, end=season.episode_count)
-            if len(unwatched) == 0:
-                break
             optimized_order = get_unwatched_optimized_order(unwatched, season.episode_count)
-            first_n_unwatched = optimized_order[0].episode == 1
-            last_ep = optimized_order[2].episode if len(optimized_order) > 2 else optimized_order[-1].episode
-            all_watched = False
+            first_n_unwatched = True
+            all_watched = True
             for ep in optimized_order:
-                print('Processing Episode', ep.episode, '[', ep.id, '] of ', season.name, ' of ', show.title, '[', show.id, ']')
-                group = re.search("\\[(.+?)\\]", ep.file).group(1)
-
-                #
+                print('Processing Episode', ep.episode, '[', ep.id, '] of ', season.name, ' of ', show.title, '[',
+                      show.id, ']')
                 if 'Specials' in season.name and ('Opening' in ep.file or 'Ending' in ep.file):
-                    if some_watched:
+                    # Don't try to check anidb for watched status of ed/op
+                    if should_mark_op_ed_watched:
                         kodi.mark_as_watched(ep)
                     continue
+                group = re.search("\\[(.+?)\\]", ep.file).group(1)
                 anidb_file = anidb.load_episode_details(show.title, group, ep.episode)
                 if anidb_file is None:
                     logger.info(
@@ -73,21 +69,19 @@ def sync_anime(kodi_config: KodiConfig, anidb_config: AniDBConfig, start_at=0):
                 all_watched = all_watched and anidb_file.watched
 
                 if anidb_file.watched:
-                    some_watched = True
-
-                if anidb_file.watched and not ep.watched:
-                    if ep.episode == last_ep:
+                    if not season.num == 0:
+                        # Only count s1 and not the specials
+                        should_mark_op_ed_watched = True
+                    if ep.episode == season.episode_count and all_watched:
                         # Assume all are watched
-                        all_watched = True
                         break
                     kodi.mark_as_watched(ep)
-                elif first_n_unwatched and not anidb_file.watched and ep.episode >= 2:
+                elif first_n_unwatched and not anidb_file.watched and ep.episode == season.episode_count:
                     print('First 2 episodes of ' + show.title + ' are unwatched. Assuming the series is unwatched')
                     break
-                # if not anidb_file.watched and ep.watched:
-                #     anidb.mark_watched(anidb_file)
             if all_watched:
-                print('First, second and last episodes are watched. Assuming ' + show.title + ' is watched')
+                print('First, second and last episodes are watched. Assuming ' + season.name + ' of '
+                      + show.title + ' is watched')
                 for e in optimized_order:
                     kodi.mark_as_watched(e)
         set_starting_series(show.id)
