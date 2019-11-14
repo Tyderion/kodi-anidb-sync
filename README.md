@@ -1,5 +1,5 @@
 # Anidb-Kodi-Sync
-Synchronizes the watched status of your anime list on [aniDB](https://anidb.net).
+Synchronizes the watched status of your anime on kodi with your list on [aniDB](https://anidb.net).
 
 If your anime files are named in a way that the group is in the first `[]`, e.g. `One Piece - 01 [FansubGroup].mkv` it should work.
 
@@ -9,7 +9,7 @@ I suggest using Scudlees [AniDB scraper](https://forum.kodi.tv/showthread.php?ti
 `pip install -r requirements.txt`
 
 ## Configuration
-Setup your environment variables as follows (or change values in config.py)
+Setup your environment variables as follows (or change values in `anidbsync/config.py`)
 ### Anidb
 - `ANIDB.USERNAME` - Your AniDB Username
 - `ANIDB.PASSWORD` - Your AniDB Password
