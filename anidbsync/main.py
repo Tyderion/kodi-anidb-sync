@@ -3,6 +3,7 @@ from anidbsync.auto import AutoRepr
 from anidbsync.config import KodiConfig, AniDBConfig, get_anidb_config, get_kodi_config
 from anidbsync.kodi.kodi import KodiHelper, KodiSeason, KodiEpisode, KodiTVShow
 from anidbsync.logger import get_logger
+from time import sleep
 
 logger = get_logger('anidbsync')
 
@@ -49,11 +50,12 @@ class Result(AutoRepr):
 
 
 class AnimeSync:
-    def __init__(self, kodi_config: KodiConfig, anidb_config: AniDBConfig, start_at=0):
+    def __init__(self, kodi_config: KodiConfig, anidb_config: AniDBConfig, start_at=0, interactive=True):
         self.kodi = KodiHelper(config=kodi_config, start_at=start_at)
         self.anidb = AnidbHelper(config=anidb_config)
         self.shows = self.kodi.get_tvshows()
         self.current_result = Result()
+        self.interactive = interactive
 
     def sync(self):
         for show in self.shows:
@@ -87,7 +89,12 @@ class AnimeSync:
         anidb_file = self.anidb.load_episode_details(show.title, ep.group, ep.episode)
         if anidb_file is None:
             logger.info('Could not retrieve data for episode' + episode_log_info)
-            anidb_file = FileEntry.UNWATCHED
+            if self.interactive:
+                sleep(1)
+                is_watched = input('Did you watch this file? y=yes, anything else = no\n')
+                anidb_file = FileEntry.WATCHED if is_watched == 'y' else FileEntry.UNWATCHED
+            else:
+                anidb_file = FileEntry.UNWATCHED
 
         if anidb_file.watched:
             self.kodi.mark_as_watched(ep)
@@ -103,6 +110,11 @@ class AnimeSync:
 
 
 if __name__ == '__main__':
+    import sys
+    interactive = False
+    if sys.gettrace() is None:
+        # Not Debugging, so we want to ask for input if file not found
+        interactive = True
     start = get_starting_series()
-    anisync = AnimeSync(get_kodi_config(), get_anidb_config(), start_at=start)
+    anisync = AnimeSync(get_kodi_config(), get_anidb_config(), start_at=start, interactive=interactive)
     anisync.sync()
