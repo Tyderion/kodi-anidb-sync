@@ -1,6 +1,7 @@
 from kodipydent import Kodi
 from anidbsync.auto import AutoRepr
 import operator
+import re
 # TODO: Solve multiple entries problem
 from anidbsync.config import KodiConfig
 
@@ -26,6 +27,7 @@ class KodiEpisode(AutoRepr):
         self.show = data['showtitle']
         self.title = data['title']
         self.watched = data['playcount'] > 0
+        self.group = re.search("\\[(.+?)\\]", self.file).group(1)
 
 
 class KodiHelper:
