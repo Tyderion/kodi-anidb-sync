@@ -32,10 +32,12 @@ class Result(AutoRepr):
         self.all_watched = False
 
     def update(self, anidb_file: FileEntry, season: KodiSeason, ep: KodiEpisode):
+        if season.num == 0:
+            # Specials and op/ed
+            return
         self.update_assumed(anidb_file)
         if anidb_file.watched:
-            if not season.num == 0:  # 0 = Specials (Openings, Endings etc)
-                self.some_watched = True
+            self.some_watched = True
             if self.assume_watched and ep.episode == season.episode_count:
                 self.all_watched = True
         elif self.assume_unwatched and ep.episode == season.episode_count:
@@ -59,6 +61,9 @@ class AnimeSync:
             seasons = self.kodi.get_seasons(show.id)
             self.current_result = Result()
             for season in seasons:
+                # Don't accidentally mark specials as watched / unwatched
+                self.current_result.all_watched = False
+                self.current_result.all_unwatched = False
                 unwatched = self.get_unwatched_optimized_order(season, show)
                 for ep in unwatched:
                     if self.current_result.all_watched:
@@ -68,8 +73,6 @@ class AnimeSync:
                         print('First 2 episodes of ' + show.title + ' are unwatched. Assuming the series is unwatched')
                         break
                     self.sync_episode(ep, season, show)
-                if self.current_result.all_unwatched:
-                    break
             set_starting_series(show.id)
 
     def sync_episode(self, ep: KodiEpisode, season: KodiSeason, show: KodiTVShow):
