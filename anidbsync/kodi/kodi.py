@@ -11,6 +11,12 @@ class KodiTVShow(AutoRepr):
         self.episode_count = data['episode']
         self.seasons = data['season']
 
+class KodiSeason(AutoRepr):
+    def __init__(self, data):
+        self.id = data['seasonid']
+        self.num = data['season']
+        self.episode_count = data['episode']
+        self.name = data['label']
 
 class KodiEpisode(AutoRepr):
     def __init__(self, data):
@@ -35,6 +41,10 @@ class KodiHelper:
                 self.kodi.VideoLibrary.GetTVShows(properties=['title', 'season', 'episode', 'originaltitle'])['result'][
                     'tvshows'] if
                 show['tvshowid'] > self.start_at]
+
+    def get_seasons(self, tvshowid):
+        return [KodiSeason(season) for season in
+                self.kodi.VideoLibrary.GetSeasons(tvshowid=tvshowid, properties=['season', 'episode'])['result']['seasons']]
 
     def get_episodes(self, tvshow: int, season: int, start=0, end=-1):
         result = self.kodi.VideoLibrary.GetEpisodes(tvshowid=tvshow, season=season, limits={'start': start, 'end': end},

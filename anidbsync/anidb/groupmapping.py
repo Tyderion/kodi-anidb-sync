@@ -5,5 +5,6 @@ GROUPS = {
     'GFS': ['German Fansubs'],
     'GAX': ['Generation: Anime Xtreme'],
     'AS': ['AnimeShimatta'],
-    'DB': ['Dattebayo']
+    'DB': ['Dattebayo'],
+    'BS-AE': ['Black Strike Anime: Evil']
 }
