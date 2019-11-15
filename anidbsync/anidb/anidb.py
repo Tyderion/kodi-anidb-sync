@@ -24,6 +24,7 @@ class MyListEntry(AutoRepr):
 
 class FileEntry(AutoRepr):
     UNWATCHED = None
+    WATCHED = None
 
     def __init__(self, data):
         self.fid = data[0]
@@ -34,6 +35,7 @@ class FileEntry(AutoRepr):
 
 
 FileEntry.UNWATCHED = FileEntry(['', '0'])
+FileEntry.WATCHED = FileEntry(['', '1'])
 
 
 class AnidbHelper:
@@ -94,6 +96,7 @@ class AnidbHelper:
             res = self.call('FILE', {'fid': ml_entry.fid, 'fmask': '0000000020', 'amask': '00000000'})
             if res.code == 220:
                 return FileEntry(res.data[0])
+        return None
 
     def mark_watched(self, file: FileEntry):
         sleep(SLEEP_TIME)

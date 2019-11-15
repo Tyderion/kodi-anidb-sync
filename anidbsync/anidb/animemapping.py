@@ -5,5 +5,7 @@ ANIME = {
     'MAR': 'MAR Heaven',
     'Ah My Buddha': 'Ah My Buddha!!',
     'Ah My Buddha (2)': 'Ah My Buddha!! (2006)',
-    'Sayonara Zetsubou Sensei': 'Sayonara Zetsubou-sensei'
+    'Sayonara Zetsubou Sensei': 'Sayonara Zetsubou-sensei',
+    'Black Rock Shooter': 'Black Rock Shooter (2012)',
+    'Black Clover': 'Black Clover (2017)'
 }
